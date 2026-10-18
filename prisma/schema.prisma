@@ -1,0 +1,71 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String       @id @default(uuid())
+  email       String       @unique
+  password    String
+  createdAt   DateTime     @default(now())
+  documents   Document[]
+  quizResults QuizResult[]
+
+  @@map("users")
+}
+
+model Document {
+  id          String       @id @default(uuid())
+  title       String
+  filename    String
+  uploadDate  DateTime     @default(now())
+  userId      String
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  summary     Summary?
+  flashcards  Flashcard[]
+  quizResults QuizResult[]
+
+  @@map("documents")
+}
+
+model Summary {
+  id            String   @id @default(uuid())
+  keyTakeaways  Json
+  examFocus     Json
+  quizQuestions Json?
+  documentId    String   @unique
+  document      Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@map("summaries")
+}
+
+model Flashcard {
+  id         String   @id @default(uuid())
+  frontText  String   @db.Text
+  backText   String   @db.Text
+  documentId String
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@map("flashcards")
+}
+
+model QuizResult {
+  id             String   @id @default(uuid())
+  score          Int
+  totalQuestions Int
+  weakTopics     Json
+  documentId     String
+  document       Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt      DateTime @default(now())
+
+  @@map("quiz_results")
+}
